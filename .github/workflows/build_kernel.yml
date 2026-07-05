@@ -27,8 +27,8 @@ jobs:
       - name: Install build dependencies
         run: |
           sudo apt update
-          sudo apt install -y python3-pip jq libarchive-tools zip lib32z-dev libghc-bzlib-dev pngcrush ^liblzma.* python-is-python3 libsdl1.2-dev autoconf libxml2-utils wget pkg-config unzip w3m gawk imagemagick libc6-dev gcc-multilib patchelf gzip clang subversion optipng device-tree-compiler ccache gcc ^liblz4-.* lzip rsync automake fastboot python2.7 patch zip pngquant expat lzop libswitch-perl make libcap-dev python2 adb libxml2 bison libxml-simple-perl zlib1g-dev libarchive-tools libtool squashfs-tools gperf ^lzma.* libfl-dev ncurses-dev pwgen flex libtinfo5 minicom liblz4-tool libmpfr-dev libssl-dev lib32ncurses5-dev libbz2-dev lib32z1-dev libgmp-dev git libncurses5-dev dpkg-dev libmpc-dev lftp python2-dev python3 rar git-lfs policycoreutils unrar libncurses5 libbz2-1.0 ncftp tree python-all-dev bzip2 bc ftp software-properties-common tar libgl1-mesa-dev texinfo schedtool curl libexpat1-dev llvm libc6-dev-i386 apt-utils cmake g++-multilib build-essential re2c axel maven xsltproc g++ libx11-dev libxml-sax-base-perl gnupg bash
-          sudo pip3 install yq
+          sudo apt install -y jq libarchive-tools zip lib32z-dev libghc-bzlib-dev pngcrush python-is-python3 libsdl1.2-dev autoconf libxml2-utils wget pkg-config unzip w3m gawk imagemagick libc6-dev gcc-multilib patchelf gzip clang subversion optipng device-tree-compiler ccache gcc lzip rsync automake fastboot patch zip pngquant expat lzop libswitch-perl make libcap-dev adb libxml2 bison libxml-simple-perl zlib1g-dev libarchive-tools libtool squashfs-tools gperf libfl-dev ncurses-dev pwgen flex libtinfo5 minicom liblz4-tool libmpfr-dev libssl-dev git libncurses5-dev dpkg-dev libmpc-dev lftp rar git-lfs policycoreutils unrar libncurses5 bzip2 bc ftp software-properties-common tar libgl1-mesa-dev texinfo schedtool curl libexpat1-dev llvm libc6-dev-i386 apt-utils cmake g++-multilib build-essential re2c axel maven xsltproc g++ libx11-dev libxml-sax-base-perl gnupg bash
+          sudo pip3 install yq --break-system-packages || sudo pip3 install yq
 
       - name: Set up ccache
         run: |
@@ -77,7 +77,7 @@ jobs:
         run: echo "KERNELSU=true" >> $GITHUB_ENV
 
       - name: Set KERNELSU_VERSION environment variable
-        run: echo "KERNELSU_VERSION=$(cat ksu_version.txt)" >> $GITHUB_ENV
+        run: echo "KERNELSU_VERSION=$(cat ksu_version.txt 2>/dev/null || echo 'Custom')" >> $GITHUB_ENV
 
       - name: Add KernelSU support to kernel
         run: |
@@ -102,7 +102,7 @@ jobs:
       - name: Set ZIP_NO_KSU and ZIP_KSU environment variables
         run: |
           echo "ZIP_NO_KSU=${{ env.VERSION }}-NoKernelSU.zip" >> $GITHUB_ENV
-          echo "ZIP_KSU=${{ env.VERSION }}-KernelSU-$(cat ksu_version.txt).zip" >> $GITHUB_ENV
+          echo "ZIP_KSU=${{ env.VERSION }}-KernelSU.zip" >> $GITHUB_ENV
 
       - name: Make AnyKernel3 zip
         run: |
@@ -115,27 +115,16 @@ jobs:
           ./extract.sh
 
       - name: Make a release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: |
-             ${{ github.workspace }}/${{ env.ZIP_NO_KSU }}
-             ${{ github.workspace }}/${{ env.ZIP_KSU }}
+             ${{ github.workspace }}/*.zip
           token: ${{ secrets.GITHUB_TOKEN }}
           name: KernelSU Release - ${{ env.KERNELSU_VERSION }}
-          tag_name: ${{ github.run_id }}
+          tag_name: build-${{ github.run_id }}
           body: |
              **Info:**
-              - KernelSU Version: ${{ env.KERNELSU_VERSION }}.
-              
-              **Installation:**
-              - Download desired zip file.
-              - Flash the zip file in recovery using sideload or any other method.
-            
-              <details>
-                <summary>Build Settings</summary>
-                  ```
-                  ${{ env.buildsettings }}
-                  ```
-              </details>
+              - Kernel Compilado Exitosamente.
           draft: false
           prerelease: false
+          
